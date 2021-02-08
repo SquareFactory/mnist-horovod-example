@@ -1,0 +1,24 @@
+name: Build Docker Image
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Square
+        id: square
+        uses: mathieu-bour/square@0.1.0
+      - name: Build Docker Image
+        run: docker build -t ${{ steps.square.outputs.image-release }} .
+      - name: Setup Google Cloud SDK
+        uses: mathieu-bour/setup-gcloud@1.3.0
+        with:
+          version: local
+          service-account-key: ${{ secrets.GCLOUD_AUTH }}
+          configure-docker: europe-west6-docker.pkg.dev
+      - name: Push Docker Image to Google Artifact Registry
+        run: docker push ${{ steps.square.outputs.image-release }}

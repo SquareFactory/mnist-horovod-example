@@ -1,0 +1,6 @@
+git:
+  short-sha-length: 7
+environments:
+  edge: main
+docker:
+  image: europe-west6-docker.pkg.dev/csquare/public-examples/mnist-horovod-example

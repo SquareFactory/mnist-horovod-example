@@ -17,6 +17,8 @@ parser.add_argument('--epochs', type=int, default=10, metavar='N',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--dataset_dir', type=str, default="/opt", metavar='N',
                     help='Training/Test dataset dir (default: /opt')
+parser.add_argument('--checkpoint', type=str, default="./0.chck", metavar='N',
+                    help='Checkpoint (default: ./0.chck')
 parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
                     help='learning rate (default: 0.01)')
 parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
@@ -109,6 +111,16 @@ def test():
         print('\nTest set: Average loss: {:.4f}, Accuracy: {:.2f}%\n'.format(
             test_loss, 100. * test_accuracy))
 
+def save_checkpoint(epoch):
+    if hvd.rank() == 0:
+        #filepath = args.checkpoint_format.format(epoch=epoch + 1)
+        filepath = args.checkpoint
+        state = {
+            'model': model.state_dict(),
+            'optimizer': optimizer.state_dict(),
+        }
+        torch.save(state, filepath)
+
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -192,3 +204,4 @@ if __name__ == '__main__':
     for epoch in range(1, args.epochs + 1):
         train(epoch)
         test()
+        save_checkpoint(epoch)

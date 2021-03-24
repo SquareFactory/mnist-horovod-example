@@ -15,10 +15,15 @@ parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
                     help='input batch size for testing (default: 1000)')
 parser.add_argument('--epochs', type=int, default=10, metavar='N',
                     help='number of epochs to train (default: 10)')
-parser.add_argument('--dataset_dir', type=str, default="/opt", metavar='N',
-                    help='Training/Test dataset dir (default: /opt')
-parser.add_argument('--checkpoint', type=str, default="./0.chck", metavar='N',
-                    help='Checkpoint (default: ./0.chck')
+#parser.add_argument('--dataset_dir', type=str, default="/opt", metavar='N',
+#                    help='Training/Test dataset dir (default: /opt')
+parser.add_argument('--train-dir', type=str, default="/opt", metavar='N',
+                    help='Training dataset dir (default: /opt')
+parser.add_argument('--val-dir', type=str, default="/opt", metavar='N',
+                    help='Validation dataset dir (default: /opt')
+parser.add_argument('--checkpoint-format', default='checkpoint-{epoch}.pth.tar',
+                    help='checkpoint file format')
+parser.add_argument('--checkpoints-dir', default='.', help='checkpoint directory location')
 parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
                     help='learning rate (default: 0.01)')
 parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
@@ -111,10 +116,29 @@ def test():
         print('\nTest set: Average loss: {:.4f}, Accuracy: {:.2f}%\n'.format(
             test_loss, 100. * test_accuracy))
 
+    chkp_filename = args.checkpoint_format.format(epoch=epoch + 1)
+    meta_path = os.path.join(args.checkpoints_dir, chkp_filename + ".metadata.json")
+    meta_data = create_metadata(test_loss, test_accuracy)
+    print(f"Writing metadata to {meta_path}")
+    os.makedirs(os.path.dirname(meta_path), exist_ok = True)
+    with open(meta_path, 'w') as metadata_file:
+        json.dump(meta_data, metadata_file)
+
+def create_metadata(val_loss, val_accuracy):
+    metadata = {}
+    metadata['timestamp'] = time.time()
+    metadata['epoch'] = epoch + 1
+    metadata['stats'] = {}
+    metadata['stats']['loss'] = val_loss
+    metadata['stats']['accuracy'] = val_accuracy
+    return metadata
+
 def save_checkpoint(epoch):
     if hvd.rank() == 0:
+        #filepath = args.checkpoint
         #filepath = args.checkpoint_format.format(epoch=epoch + 1)
-        filepath = args.checkpoint
+        filename = args.checkpoint_format.format(epoch=epoch + 1)
+        filepath = os.path.join(args.checkpoints_dir, filename)
         state = {
             'model': model.state_dict(),
             'optimizer': optimizer.state_dict(),
@@ -147,7 +171,7 @@ if __name__ == '__main__':
         kwargs['multiprocessing_context'] = 'forkserver'
 
     train_dataset = \
-        datasets.MNIST('{}/data-{}'.format(args.dataset_dir, hvd.rank()), 
+        datasets.MNIST('{}/data-{}'.format(args.train_dir, hvd.rank()),
                        train=True, download=False,
                        transform=transforms.Compose([
                            transforms.ToTensor(),
@@ -160,7 +184,7 @@ if __name__ == '__main__':
         train_dataset, batch_size=args.batch_size, sampler=train_sampler, **kwargs)
 
     test_dataset = \
-        datasets.MNIST('{}/data-{}'.format(args.dataset_dir, hvd.rank()), 
+        datasets.MNIST('{}/data-{}'.format(args.val_dir, hvd.rank()),
             train=False, transform=transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.1307,), (0.3081,))

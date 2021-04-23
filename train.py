@@ -119,7 +119,7 @@ def test():
         print('\nTest set: Average loss: {:.4f}, Accuracy: {:.2f}%\n'.format(
             test_loss, 100. * test_accuracy))
 
-    chkp_filename = args.checkpoint_format.format(epoch=epoch + 1)
+    chkp_filename = args.checkpoint_format.format(epoch=epoch)
     meta_path = os.path.join(args.checkpoints_dir, chkp_filename + ".metadata.json")
     meta_data = create_metadata(test_loss, test_accuracy)
     print(f"Writing metadata to {meta_path}")
@@ -130,7 +130,7 @@ def test():
 def create_metadata(val_loss, val_accuracy):
     metadata = {}
     metadata['timestamp'] = time.time()
-    metadata['epoch'] = epoch + 1
+    metadata['epoch'] = epoch
     metadata['stats'] = {}
     metadata['stats']['loss'] = val_loss
     metadata['stats']['accuracy'] = val_accuracy
@@ -140,7 +140,7 @@ def save_checkpoint(epoch):
     if hvd.rank() == 0:
         #filepath = args.checkpoint
         #filepath = args.checkpoint_format.format(epoch=epoch + 1)
-        filename = args.checkpoint_format.format(epoch=epoch + 1)
+        filename = args.checkpoint_format.format(epoch=epoch)
         filepath = os.path.join(args.checkpoints_dir, filename)
         state = {
             'model': model.state_dict(),
@@ -228,7 +228,8 @@ if __name__ == '__main__':
                                          op=hvd.Adasum if args.use_adasum else hvd.Average,
                                          gradient_predivide_factor=args.gradient_predivide_factor)
 
-    for epoch in range(1, args.epochs + 1):
+    # for epoch in range(1, args.epochs + 1):
+    for epoch in range(0, args.epochs):
         train(epoch)
         test()
         save_checkpoint(epoch)

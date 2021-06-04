@@ -10,6 +10,10 @@ from torchvision import datasets, transforms
 import torch.utils.data.distributed
 import horovod.torch as hvd
 
+"""
+MNIST dataset training.
+"""
+
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
 parser.add_argument('--epochs', type=int, default=10, metavar='N',

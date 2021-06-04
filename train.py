@@ -12,37 +12,39 @@ import horovod.torch as hvd
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
-parser.add_argument('--batch-size', type=int, default=64, metavar='N',
-                    help='input batch size for training (default: 64)')
-parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
-                    help='input batch size for testing (default: 1000)')
 parser.add_argument('--epochs', type=int, default=10, metavar='N',
-                    help='number of epochs to train (default: 10)')
-#parser.add_argument('--dataset_dir', type=str, default="/opt", metavar='N',
-#                    help='Training/Test dataset dir (default: /opt')
-parser.add_argument('--train-dir', type=str, default="/opt", metavar='N',
-                    help='Training dataset dir (default: /opt')
-parser.add_argument('--val-dir', type=str, default="/opt", metavar='N',
-                    help='Validation dataset dir (default: /opt')
+                    help='Number of epochs to train (default: 10)')
+parser.add_argument('--batch-size', type=int, default=64, metavar='N',
+                    help='Input batch size for training (default: 64)')
+parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
+                    help='Input batch size for testing (default: 1000)')
+parser.add_argument('--train-dir', type=str, default='/datasets/mnist', metavar='N',
+                    help='Training dataset directory (default: /opt')
+parser.add_argument('--val-dir', type=str, default='/datasets/mnist', metavar='N',
+                    help='Validation dataset directory (default: /opt')
+
 parser.add_argument('--checkpoint-format', default='checkpoint-{epoch}.pth.tar',
-                    help='checkpoint file format')
-parser.add_argument('--checkpoints-dir', default='.', help='checkpoint directory location')
+                    help='Checkpoint filename format (default: checkpoint-{epoch}.pth.tar)')
+parser.add_argument('--checkpoints-dir', default='/artifacts/checkpoints', help='checkpoint directory location')
+
 parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
-                    help='learning rate (default: 0.01)')
+                    help='Learning rate (default: 0.01)')
 parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
                     help='SGD momentum (default: 0.5)')
-parser.add_argument('--no-cuda', action='store_true', default=False,
-                    help='disables CUDA training')
-parser.add_argument('--seed', type=int, default=42, metavar='S',
-                    help='random seed (default: 42)')
-parser.add_argument('--log-interval', type=int, default=10, metavar='N',
-                    help='how many batches to wait before logging training status')
-parser.add_argument('--fp16-allreduce', action='store_true', default=False,
-                    help='use fp16 compression during allreduce')
-parser.add_argument('--use-adasum', action='store_true', default=False,
-                    help='use adasum algorithm to do reduction')
 parser.add_argument('--gradient-predivide-factor', type=float, default=1.0,
-                    help='apply gradient predivide factor in optimizer (default: 1.0)')
+                    help='Apply gradient predivide factor in optimizer (default: 1.0)')
+
+parser.add_argument('--no-cuda', action='store_true', default=False,
+                    help='Disables CUDA training')
+parser.add_argument('--seed', type=int, default=42, metavar='S',
+                    help='Random seed (default: 42)')
+
+parser.add_argument('--log-interval', type=int, default=10, metavar='N',
+                    help='How many batches to wait before logging training status')
+parser.add_argument('--fp16-allreduce', action='store_true', default=False,
+                    help='Use fp16 compression during allreduce')
+parser.add_argument('--use-adasum', action='store_true', default=False,
+                    help='Use adasum algorithm to do reduction')
 
 
 class Net(nn.Module):
@@ -120,9 +122,9 @@ def test():
             test_loss, 100. * test_accuracy))
 
     chkp_filename = args.checkpoint_format.format(epoch=epoch)
-    meta_path = os.path.join(args.checkpoints_dir, chkp_filename + ".metadata.json")
+    meta_path = os.path.join(args.checkpoints_dir, chkp_filename + '.metadata.json')
     meta_data = create_metadata(test_loss, test_accuracy)
-    print(f"Writing metadata to {meta_path}")
+    print(f'Writing metadata to {meta_path}')
     os.makedirs(os.path.dirname(meta_path), exist_ok = True)
     with open(meta_path, 'w') as metadata_file:
         json.dump(meta_data, metadata_file)
